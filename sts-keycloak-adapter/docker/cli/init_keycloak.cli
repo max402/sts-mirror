@@ -1,0 +1,3 @@
+embed-server --server-config=standalone.xml --std-out=echo
+run-batch --file=/install/sts-keycloak-adapter.cli
+stop-embedded-server

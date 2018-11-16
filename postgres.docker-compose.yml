@@ -8,18 +8,19 @@ services:
     volumes:
     - "./.docker/keycloak-db/data:/var/lib/postgresql/data"
   keycloak:
-    image: "adorsys/keycloak-sts-adapter:latest"
+    build: ./sts-keycloak-adapter
+    image: local/sts-keycloak:latest
     environment:
       KEYCLOAK_PASSWORD: admin123
       KEYCLOAK_USER: admin
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak
-      POSTGRES_PORT_5432_TCP_ADDR: keycloak_db
+#      POSTGRES_USER: keycloak
+#      POSTGRES_PASSWORD: keycloak
+#      POSTGRES_PORT_5432_TCP_ADDR: keycloak_db
     ports:
     - "8080:8080"
     - "8787:8787"
-    volumes:
-    - "./.docker/keycloak/data:/opt/jboss/keycloak/standalone/data"
+#    volumes:
+#    - "./.docker/keycloak/data:/opt/jboss/keycloak/standalone/data"
     links:
     - keycloak_db
     networks:
@@ -28,18 +29,22 @@ services:
     - "-b"
     - "0.0.0.0"
     - "--debug"
-  post_process:
-    image: adorsys/keycloak-config-cli:v0.2.2
+  keycloak_import:
+    image: local/keycloak-config-cli:latest
     depends_on:
     - keycloak
     networks:
     - sts_network
     volumes:
-    - ./keycloak-config/docker:/opt/keycloak-config-cli/configs
+    - ./keycloak-config/docker:/tmp/keycloak-config-cli/configs
     environment:
-    - KEYCLOAK_URL=http://keycloak:8080/auth
+    - KEYCLOAK_URL=http://keycloak:8080
     - KEYCLOAK_ADMIN=admin
     - KEYCLOAK_ADMIN_PASSWORD=admin123
+    - JWKS_CONNECT_TIMEOUT=2000
+    - JWKS_READ_TIMEOUT=1000
+    - JWKS_SIZE_LIMIT=1048576
+    command: config-cli
   sts-db:
     image: postgres:9.6-alpine
     container_name: sts_db
